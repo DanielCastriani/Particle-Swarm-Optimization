@@ -1,18 +1,18 @@
 
 
-from typing import Callable
+import copy
 
 import numpy as np
 from numpy.typing import NDArray
 
 from py_pso import Particle
-from py_pso.dtypes import Bound
+from py_pso.dtypes import Bound, ObjectiveFunction
 
 
 class PSO:
     bound: Bound
     n_particles: int
-    objective_function: Callable[[np.ndarray], float]
+    objective_function: ObjectiveFunction
 
     w: float
     c1: float
@@ -23,7 +23,7 @@ class PSO:
     particles: list[Particle]
 
     def __init__(
-            self, objective_function: Callable[[np.ndarray], float], n_particles: int = 50, bound: Bound = None,
+            self, objective_function: ObjectiveFunction, n_particles: int = 50, bound: Bound = None,
             w: float = .5, c1: float = .8, c2: float = .9) -> None:
 
         if bound is None:
@@ -70,11 +70,18 @@ class PSO:
         self.set_global_best()
         self.move_particles()
 
-    def optimize(self, iteration: int = 50, seed: int = None):
+    def optimize(self, iteration: int = 50, seed: int = None, return_hist: bool = False):
         if seed is not None:
             np.random.seed(seed)
 
+        hist = []
         for _ in range(iteration):
             self.iteration()
+
+            if return_hist:
+                hist.append(copy.deepcopy(self.particles))
+
+        if return_hist:
+            return self.best_position, self.best_score, hist
 
         return self.best_position, self.best_score
