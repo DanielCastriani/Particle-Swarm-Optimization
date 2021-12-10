@@ -1,13 +1,15 @@
 from typing import cast
+
+import matplotlib.animation
 import matplotlib.pyplot as plt
 import numpy as np
-from py_pso.dtypes import Bound, ObjectiveFunction
-from mpl_toolkits.mplot3d import Axes3D
 import plotly.graph_objects as go
-
+from mpl_toolkits.mplot3d import Axes3D
 from numpy.typing import NDArray
-
+from py_pso.dtypes import Bound, ObjectiveFunction
 from py_pso.particle import Particle
+
+from utils.file_utils import create_path
 
 
 def _get_surface(bounds: Bound = None, x: NDArray[np.float_] = None, y: NDArray[np.float_] = None):
@@ -25,6 +27,53 @@ def _get_surface(bounds: Bound = None, x: NDArray[np.float_] = None, y: NDArray[
     x, y = cast(NDArray[np.float_], x), cast(NDArray[np.float_], y)
 
     return x, y
+
+
+def plot_animation(
+        hist: list[Particle],
+        objective_function: ObjectiveFunction,
+        bounds: Bound = None,
+        x: NDArray[np.float_] = None, y: NDArray[np.float_] = None,
+        figsize: tuple[int, int] = (10, 10), save_path: str = None, filename: str = None):
+
+    plt.rcParams["animation.html"] = "jshtml"
+    plt.rcParams['animation.embed_limit'] = 16384
+    plt.rcParams['figure.dpi'] = 150
+    plt.ioff()
+
+    def plot_frame(i: int, hist: list, ax):
+        ax.clear()
+
+        particles = hist[i]
+
+        X, Y = _get_surface(bounds, x=x, y=y)
+        Z = np.array([objective_function(np.array([X[i], Y[i]])) for i in range(X.shape[0])])
+
+        ax.plot_surface(X, Y, Z, alpha=.4)
+
+        pos = np.array([p.position for p in particles])
+        pos_z = [objective_function(p) for p in pos]
+
+        vel = np.array([p.velocity for p in particles])
+        vel_z = [objective_function(p) for p in vel]
+
+        ax.quiver(pos[:, 0], pos[:, 1], pos_z, vel[:, 0],
+                  vel[:, 1], vel_z,  alpha=.3, color='black')
+
+        ax.scatter(pos[:, 0], pos[:, 1], pos_z, color='red')
+
+        plt.gca()
+
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(projection='3d')
+    ax.set_xlim(bounds[0])
+    ax.set_ylim(bounds[1])
+
+    anim = matplotlib.animation.FuncAnimation(fig, lambda i: plot_frame(i, hist, ax), frames=range(len(hist)))
+    if save_path is not None and filename is not None:
+        anim.save(create_path(save_path, filename=filename))
+
+    return anim
 
 
 def draw_optimization_surface(
