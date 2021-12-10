@@ -17,10 +17,10 @@ def _get_surface(bounds: Bound = None, x: NDArray[np.float_] = None, y: NDArray[
         raise ValueError("You should define 'bounds' or 'x' and 'y'")
 
     if x is None and bounds is not None:
-        x = np.arange(*bounds[0])
+        x = np.linspace(*bounds[0], num=100)
 
     if y is None and bounds is not None:
-        y = np.arange(*bounds[1])
+        y = np.linspace(*bounds[1], num=100)
 
     x, y = np.meshgrid(x, y)
 
