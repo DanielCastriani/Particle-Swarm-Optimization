@@ -73,7 +73,7 @@ def plot_animation(
     if save_path is not None and filename is not None:
         anim.save(create_path(save_path, filename=filename))
 
-    return anim
+    plot_frame(-1, hist, ax)
 
 
 def draw_optimization_surface(
